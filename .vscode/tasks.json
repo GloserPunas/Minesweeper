@@ -1,0 +1,118 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build",
+      "type": "shell",
+      "command": "g++",
+      "args": [
+        "-std=c++17",
+        "-Wall",
+        "-Wextra",
+
+        "-IC:/Users/Admin/OneDrive/Documents/SDL2-2.26.4/x86_64-w64-mingw32/include/SDL2",
+        "-ID:/SDL/SDL2_ttf-2.21.1/x86_64-w64-mingw32/include/SDL2",
+        "-I${workspaceFolder}/src",
+
+        "${workspaceFolder}/src/main.cpp",
+        "${workspaceFolder}/src/Game.cpp",
+        "${workspaceFolder}/src/Board.cpp",
+        "${workspaceFolder}/src/Button.cpp",
+        "${workspaceFolder}/src/Renderer.cpp",
+
+        "-LC:/Users/Admin/OneDrive/Documents/SDL2-2.26.4/x86_64-w64-mingw32/lib",
+        "-LD:/SDL/SDL2_ttf-2.21.1/x86_64-w64-mingw32/lib",
+
+        "-lmingw32",
+        "-lSDL2main",
+        "-lSDL2",
+        "-lSDL2_ttf",
+
+        "-mwindows",
+
+        "-o",
+        "${workspaceFolder}/bin/minesweeper.exe"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "clear": true
+      },
+      "problemMatcher": "$gcc"
+    },
+
+    {
+      "label": "build (debug)",
+      "type": "shell",
+      "command": "g++",
+      "args": [
+        "-std=c++17",
+        "-Wall",
+        "-Wextra",
+        "-g",
+
+        "-IC:/Users/Admin/OneDrive/Documents/SDL2-2.26.4/x86_64-w64-mingw32/include/SDL2",
+        "-ID:/SDL/SDL2_ttf-2.21.1/x86_64-w64-mingw32/include/SDL2",
+        "-I${workspaceFolder}/src",
+
+        "${workspaceFolder}/src/main.cpp",
+        "${workspaceFolder}/src/Game.cpp",
+        "${workspaceFolder}/src/Board.cpp",
+        "${workspaceFolder}/src/Button.cpp",
+        "${workspaceFolder}/src/Renderer.cpp",
+
+        "-LC:/Users/Admin/OneDrive/Documents/SDL2-2.26.4/x86_64-w64-mingw32/lib",
+        "-LD:/SDL/SDL2_ttf-2.21.1/x86_64-w64-mingw32/lib",
+
+        "-lmingw32",
+        "-lSDL2main",
+        "-lSDL2",
+        "-lSDL2_ttf",
+
+        "-mconsole",
+
+        "-o",
+        "${workspaceFolder}/bin/minesweeper_debug.exe"
+      ],
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "clear": true
+      },
+      "problemMatcher": "$gcc"
+    },
+
+    {
+      "label": "clean",
+      "type": "shell",
+      "command": "cmd",
+      "args": [
+        "/c",
+        "if exist ${workspaceFolder}\\bin\\minesweeper.exe del ${workspaceFolder}\\bin\\minesweeper.exe & if exist ${workspaceFolder}\\bin\\minesweeper_debug.exe del ${workspaceFolder}\\bin\\minesweeper_debug.exe"
+      ],
+      "presentation": {
+        "reveal": "silent",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+
+    {
+      "label": "build & run",
+      "dependsOn": "build",
+      "type": "shell",
+      "command": "${workspaceFolder}/bin/minesweeper.exe",
+      "args": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    }
+  ]
+}
