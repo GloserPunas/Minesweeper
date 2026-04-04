@@ -1,11 +1,19 @@
 #include "Game.h"
 #include <iostream>
 #include <string>
+#include <SDL_image.h>
 
 Game::~Game() {
-    if (font)     TTF_CloseFont(font);
+    if (font) TTF_CloseFont(font);
+
+    if (logoTexture) {
+        SDL_DestroyTexture(logoTexture);
+        logoTexture = nullptr;
+    }
+    IMG_Quit();
+
     if (renderer) SDL_DestroyRenderer(renderer);
-    if (window)   SDL_DestroyWindow(window);
+    if (window) SDL_DestroyWindow(window);
     TTF_Quit();
     SDL_Quit();
 }
@@ -17,6 +25,10 @@ bool Game::init() {
     }
     if (TTF_Init() != 0) {
         std::cerr << "[TTF] Init failed: " << TTF_GetError() << "\n";
+        return false;
+    }
+    if (IMG_Init(IMG_INIT_PNG) == 0) {
+        std::cerr << "[IMG] Init failed: " << IMG_GetError() << "\n";
         return false;
     }
 
@@ -45,6 +57,14 @@ bool Game::init() {
         return false;
     }
 
+    SDL_Surface* logoSurf = IMG_Load("D:/Minesweeper/assets/image/logo.png");
+    if (logoSurf) {
+        logoTexture = SDL_CreateTextureFromSurface(renderer, logoSurf);
+        SDL_FreeSurface(logoSurf);
+    } else {
+        std::cerr << "[IMG] Failed to load logo.png: " << IMG_GetError() << "\n";
+    }
+
     buildMenuButtons();
     buildGameButtons();
     return true;
@@ -62,11 +82,11 @@ void Game::run() {
 
 void Game::buildMenuButtons() {
     menuButtons = {
-        { {50, 120, 120, 50}, "Beginner", Color::BTN_NORMAL, Color::BLACK },
-        { {190, 120, 160, 50}, "Intermediate", Color::BTN_NORMAL, Color::BLACK },
-        { {370, 120, 80, 50}, "Expert", Color::BTN_NORMAL, Color::BLACK },
-        { {50, 180, 120, 40}, "Setting", Color::BTN_NORMAL, Color::BLACK },
-        { {370, 180, 80, 40}, "Quit", Color::BTN_NORMAL, Color::BLACK },
+        { {50, 420, 120, 50}, "Beginner", Color::BTN_NORMAL, Color::BLACK },
+        { {190, 420, 160, 50}, "Intermediate", Color::BTN_NORMAL, Color::BLACK },
+        { {370, 420, 80, 50}, "Expert", Color::BTN_NORMAL, Color::BLACK },
+        { {50, 480, 120, 40}, "Setting", Color::BTN_NORMAL, Color::BLACK },
+        { {370, 480, 80, 40}, "Quit", Color::BTN_NORMAL, Color::BLACK },
     };
 }
 
@@ -190,8 +210,23 @@ void Game::render() {
 }
 
 void Game::renderMenu() {
-    SDL_Rect titleArea = { 0, 5, WINDOW_WIDTH, 50 };
-    drawTextCentered("Bomb Sweeper", Color::TITLE, titleArea);
+
+    if (logoTexture) {
+        int logoW, logoH;
+        SDL_QueryTexture(logoTexture, nullptr, nullptr, &logoW, &logoH);
+
+        SDL_Rect logoRect = {
+            (WINDOW_WIDTH - logoW) / 2,
+            20,
+            logoW,
+            logoH
+        };
+        SDL_RenderCopy(renderer, logoTexture, nullptr, &logoRect);
+    }
+    else {
+        SDL_Rect titleArea = { 0, 40, WINDOW_WIDTH, 80 };
+        drawTextCentered("Bomb Sweeper", Color::TITLE, titleArea);
+    }
 
     for (const auto& btn : menuButtons)
         drawButton(btn);
@@ -272,10 +307,10 @@ void Game::renderGame() {
     }
 
     if (board.gameOver || board.win) {
-        std::string msg      = board.win ? "You Win!" : "Game Over!";
-        SDL_Color   msgColor = board.win ? Color::WIN_MSG : Color::LOSE_MSG;
-        int         msgY     = boardY + board.rows * CELL_SIZE + 10;
-        SDL_Rect    msgArea  = { 0, msgY, WINDOW_WIDTH, 40 };
+        std::string msg = board.win ? "You Win!" : "Game Over!";
+        SDL_Color msgColor = board.win ? Color::WIN_MSG : Color::LOSE_MSG;
+        int msgY = boardY + board.rows * CELL_SIZE + 10;
+        SDL_Rect msgArea = { 0, msgY, WINDOW_WIDTH, 40 };
         drawTextCentered(msg, msgColor, msgArea);
     }
 }

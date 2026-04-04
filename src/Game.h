@@ -28,6 +28,7 @@ private:
     SDL_Window* window = nullptr;
     SDL_Renderer* renderer = nullptr;
     TTF_Font* font = nullptr;
+    SDL_Texture* logoTexture = nullptr;
 
     GameState state = GameState::MENU;
     bool running = false;
