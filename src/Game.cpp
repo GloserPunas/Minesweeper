@@ -2,10 +2,6 @@
 #include <iostream>
 #include <string>
 
-// ============================================================
-// Destructor
-// ============================================================
-
 Game::~Game() {
     if (font)     TTF_CloseFont(font);
     if (renderer) SDL_DestroyRenderer(renderer);
@@ -13,10 +9,6 @@ Game::~Game() {
     TTF_Quit();
     SDL_Quit();
 }
-
-// ============================================================
-// init()
-// ============================================================
 
 bool Game::init() {
     if (SDL_Init(SDL_INIT_VIDEO) != 0) {
@@ -47,12 +39,9 @@ bool Game::init() {
         return false;
     }
 
-    // FIX 1: Tìm font theo đường dẫn tuyệt đối từ thư mục exe
-    // arial.ttf phải nằm cùng thư mục với file .exe (bin/)
-    font = TTF_OpenFont("D:/Minesweeper/bin/arial.ttf", FONT_SIZE_NORMAL);
+    font = TTF_OpenFont("D:/Minesweeper/assets/font/arial.ttf", FONT_SIZE_NORMAL);
     if (!font) {
         std::cerr << "[TTF] OpenFont failed: " << TTF_GetError() << "\n";
-        std::cerr << "      -> Đảm bảo arial.ttf nằm cùng thư mục với minesweeper.exe\n";
         return false;
     }
 
@@ -61,42 +50,31 @@ bool Game::init() {
     return true;
 }
 
-// ============================================================
-// run()
-// ============================================================
-
 void Game::run() {
     running = true;
     while (running) {
+        //std::cout << flagMode << std::endl;
         handleEvents();
         render();
         SDL_Delay(FRAME_DELAY_MS);
     }
 }
 
-// ============================================================
-// Init helpers
-// ============================================================
-
 void Game::buildMenuButtons() {
-    // FIX 2: Khởi tạo Button đúng theo field order của struct
     menuButtons = {
-        { {50,  20, 120, 50}, "Beginner",     Color::BTN_NORMAL, Color::BLACK },
-        { {190, 20, 160, 50}, "Intermediate", Color::BTN_NORMAL, Color::BLACK },
-        { {370, 20,  80, 50}, "Expert",       Color::BTN_NORMAL, Color::BLACK },
-        { {50,  80, 120, 40}, "Setting",      Color::BTN_NORMAL, Color::BLACK },
-        { {370, 80,  80, 40}, "Quit",         Color::BTN_NORMAL, Color::BLACK },
+        { {50, 120, 120, 50}, "Beginner", Color::BTN_NORMAL, Color::BLACK },
+        { {190, 120, 160, 50}, "Intermediate", Color::BTN_NORMAL, Color::BLACK },
+        { {370, 120, 80, 50}, "Expert", Color::BTN_NORMAL, Color::BLACK },
+        { {50, 180, 120, 40}, "Setting", Color::BTN_NORMAL, Color::BLACK },
+        { {370, 180, 80, 40}, "Quit", Color::BTN_NORMAL, Color::BLACK },
     };
 }
 
 void Game::buildGameButtons() {
     restartBtn = { {WINDOW_WIDTH - 180, 10, 80, 40}, "Restart", Color::BTN_GAME, Color::BLACK };
-    menuBtn    = { {WINDOW_WIDTH - 90,  10, 80, 40}, "Menu",    Color::BTN_GAME, Color::BLACK };
+    menuBtn = { {WINDOW_WIDTH - 90,  10, 80, 40}, "Menu", Color::BTN_GAME, Color::BLACK };
+    flagBtn = { {WINDOW_WIDTH - 270, 10, 80, 40}, "Flag", Color::BTN_NORMAL, Color::BLACK };
 }
-
-// ============================================================
-// handleEvents()
-// ============================================================
 
 void Game::handleEvents() {
     SDL_Event e;
@@ -112,17 +90,19 @@ void Game::handleEvents() {
         }
 
         switch (state) {
-            case GameState::MENU:    onMenuEvent(e);    break;
-            case GameState::GAME:    onGameEvent(e);    break;
-            case GameState::SETTING: onSettingEvent(e); break;
+            case GameState::MENU:
+                onMenuEvent(e);
+                break;
+            case GameState::GAME:
+                onGameEvent(e);
+                break;
+            case GameState::SETTING:
+                onSettingEvent(e);
+                break;
             default: break;
         }
     }
 }
-
-// ============================================================
-// Event handlers
-// ============================================================
 
 void Game::onMenuEvent(const SDL_Event& e) {
     if (e.type != SDL_MOUSEBUTTONDOWN) return;
@@ -157,6 +137,10 @@ void Game::onGameEvent(const SDL_Event& e) {
         state = GameState::MENU;
         return;
     }
+    if (pointInRect(mx, my, flagBtn.rect)) {
+        flagMode = !flagMode;
+        return;
+    }
 
     if (board.gameOver || board.win) return;
 
@@ -167,10 +151,15 @@ void Game::onGameEvent(const SDL_Event& e) {
     int row = (my - boardY) / CELL_SIZE;
     int col = (mx - boardX) / CELL_SIZE;
 
-    if (e.button.button == SDL_BUTTON_LEFT) {
-        board.reveal(row, col);
-    } else if (e.button.button == SDL_BUTTON_RIGHT) {
-        board.toggleFlag(row, col);
+    if (flagMode) {
+        if (e.button.button == SDL_BUTTON_LEFT) {
+            board.toggleFlag(row, col);
+        }
+    }
+    else {
+        if (e.button.button == SDL_BUTTON_LEFT) {
+            board.reveal(row, col);
+        }
     }
 }
 
@@ -179,28 +168,26 @@ void Game::onSettingEvent(const SDL_Event& e) {
         state = GameState::MENU;
 }
 
-// ============================================================
-// render()
-// ============================================================
-
 void Game::render() {
     SDL_SetRenderDrawColor(renderer,
         Color::BG.r, Color::BG.g, Color::BG.b, Color::BG.a);
     SDL_RenderClear(renderer);
 
     switch (state) {
-        case GameState::MENU:    renderMenu();    break;
-        case GameState::GAME:    renderGame();    break;
-        case GameState::SETTING: renderSetting(); break;
+        case GameState::MENU:
+            renderMenu();
+            break;
+        case GameState::GAME:
+            renderGame();
+            break;
+        case GameState::SETTING:
+            renderSetting();
+            break;
         default: break;
     }
 
     SDL_RenderPresent(renderer);
 }
-
-// ============================================================
-// renderMenu()
-// ============================================================
 
 void Game::renderMenu() {
     SDL_Rect titleArea = { 0, 5, WINDOW_WIDTH, 50 };
@@ -210,12 +197,8 @@ void Game::renderMenu() {
         drawButton(btn);
 }
 
-// ============================================================
-// renderGame()
-// ============================================================
-
 void Game::renderGame() {
-    // Header: mine counter + buttons
+    
     std::string mineInfo = "Mines: " + std::to_string(board.remainingMines());
     SDL_Rect infoArea = { 10, 0, 180, HEADER_HEIGHT };
     drawTextCentered(mineInfo, Color::TITLE, infoArea);
@@ -223,12 +206,13 @@ void Game::renderGame() {
     drawButton(restartBtn);
     drawButton(menuBtn);
 
-    // Divider
+    flagBtn.bgColor = flagMode ? Color::BTN_HOVER : Color::BTN_GAME;
+    drawButton(flagBtn);
+
     SDL_SetRenderDrawColor(renderer,
         Color::BORDER.r, Color::BORDER.g, Color::BORDER.b, Color::BORDER.a);
     SDL_RenderDrawLine(renderer, 0, HEADER_HEIGHT, WINDOW_WIDTH, HEADER_HEIGHT);
 
-    // Board
     for (int i = 0; i < board.rows; ++i) {
         for (int j = 0; j < board.cols; ++j) {
             const Cell& cell = board.cells[i][j];
@@ -238,29 +222,32 @@ void Game::renderGame() {
                 CELL_SIZE, CELL_SIZE
             };
 
-            // FIX 3: Dùng cell.visual() + switch thay vì if-chain
-            // và Color::NUM[n] thay vì Color::NUMBER
             CellVisual v = cell.visual(board.gameOver);
 
-            // Màu nền
             SDL_Color bg;
             switch (v) {
                 case CellVisual::REVEALED_EMPTY:
-                case CellVisual::REVEALED_NUMBER: bg = Color::CELL_SHOWN;  break;
+                case CellVisual::REVEALED_NUMBER:
+                    bg = Color::CELL_SHOWN;
+                    break;
                 case CellVisual::REVEALED_BOMB:
-                case CellVisual::WRONG_FLAG:      bg = Color::CELL_BOMB;   break;
-                case CellVisual::FLAGGED:         bg = Color::CELL_FLAG;   break;
-                default:                          bg = Color::CELL_HIDDEN; break;
+                case CellVisual::WRONG_FLAG:
+                    bg = Color::CELL_BOMB;
+                    break;
+                case CellVisual::FLAGGED:
+                    bg = Color::CELL_FLAG;
+                    break;
+                default:
+                    bg = Color::CELL_HIDDEN;
+                    break;
             }
             SDL_SetRenderDrawColor(renderer, bg.r, bg.g, bg.b, bg.a);
             SDL_RenderFillRect(renderer, &r);
 
-            // Viền
             SDL_SetRenderDrawColor(renderer,
                 Color::BORDER.r, Color::BORDER.g, Color::BORDER.b, Color::BORDER.a);
             SDL_RenderDrawRect(renderer, &r);
 
-            // Nội dung
             switch (v) {
                 case CellVisual::FLAGGED:
                     drawTextCentered("F", Color::FLAG, r);
@@ -269,7 +256,6 @@ void Game::renderGame() {
                     drawTextCentered("X", Color::LOSE_MSG, r);
                     break;
                 case CellVisual::REVEALED_NUMBER:
-                    // FIX 3: Color::NUM[neighborBombs] thay vì Color::NUMBER
                     drawTextCentered(
                         std::to_string(cell.neighborBombs),
                         Color::NUM[cell.neighborBombs],
@@ -285,7 +271,6 @@ void Game::renderGame() {
         }
     }
 
-    // Thông báo kết thúc
     if (board.gameOver || board.win) {
         std::string msg      = board.win ? "You Win!" : "Game Over!";
         SDL_Color   msgColor = board.win ? Color::WIN_MSG : Color::LOSE_MSG;
@@ -295,18 +280,10 @@ void Game::renderGame() {
     }
 }
 
-// ============================================================
-// renderSetting()
-// ============================================================
-
 void Game::renderSetting() {
     SDL_Rect area = { 0, WINDOW_HEIGHT / 2 - 20, WINDOW_WIDTH, 40 };
     drawTextCentered("No settings yet. Press any key to return.", Color::BLACK, area);
 }
-
-// ============================================================
-// Utility
-// ============================================================
 
 void Game::startLevel(int levelIndex) {
     selectedLevel = levelIndex;

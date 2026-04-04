@@ -42,9 +42,9 @@ public:
 };
 
 inline void Cell::reset() {
-    hasBomb       = false;
-    revealed      = false;
-    flagged       = false;
+    hasBomb = false;
+    revealed = false;
+    flagged = false;
     neighborBombs = 0;
 }
 
