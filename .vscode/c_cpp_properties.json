@@ -4,6 +4,7 @@
             "name": "Win32",
             "includePath": [
                 "C:/Users/Admin/OneDrive/Documents/SDL2-2.26.4/x86_64-w64-mingw32/include/SDL2",
+                "C:/Users/Admin/OneDrive/Documents/SDL2_image-2.6.3/x86_64-w64-mingw32/include/SDL2",
                 "D:/SDL/SDL2_ttf-2.21.1/x86_64-w64-mingw32/include/SDL2",
                 "${workspaceFolder}/**"
             ],

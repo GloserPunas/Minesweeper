@@ -106,10 +106,10 @@ void Renderer::drawGameHeader(const Board&  board,
 void Renderer::drawEndMessage(const Board& board, int boardY) {
     if (!board.gameOver && !board.win) return;
 
-    std::string msg      = board.win ? "You Win!" : "Game Over!";
-    SDL_Color   msgColor = board.win ? Color::WIN_MSG : Color::LOSE_MSG;
+    std::string msg = board.win ? "You Win!" : "Game Over!";
+    SDL_Color msgColor = board.win ? Color::WIN_MSG : Color::LOSE_MSG;
 
-    int      msgY    = boardY + board.rows * CELL_SIZE + 10;
+    int msgY = boardY + board.rows * CELL_SIZE + 10;
     SDL_Rect msgArea = { 0, msgY, WINDOW_WIDTH, 40 };
     drawTextCentered(msg, msgColor, msgArea);
 }
