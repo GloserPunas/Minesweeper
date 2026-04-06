@@ -65,6 +65,7 @@ bool Game::init() {
         std::cerr << "[IMG] Failed to load logo.png: " << IMG_GetError() << "\n";
     }
 
+    loadHighScores();
     buildMenuButtons();
     buildGameButtons();
     return true;
@@ -75,18 +76,28 @@ void Game::run() {
     while (running) {
         //std::cout << flagMode << std::endl;
         handleEvents();
+        if (timerRunning && !board.gameOver && !board.win) {
+            currentTime = (SDL_GetTicks() - gameStartTime) / 1000;
+        }
         render();
         SDL_Delay(FRAME_DELAY_MS);
     }
 }
 
 void Game::buildMenuButtons() {
+    const int btnW = 180;
+    const int btnH = 50;
+    const int spacing = 25;
+    const int startY = 140;
+
+    const int centerX = (WINDOW_WIDTH - btnW) / 2;
     menuButtons = {
-        { {50, 420, 120, 50}, "Beginner", Color::BTN_NORMAL, Color::BLACK },
-        { {190, 420, 160, 50}, "Intermediate", Color::BTN_NORMAL, Color::BLACK },
-        { {370, 420, 80, 50}, "Expert", Color::BTN_NORMAL, Color::BLACK },
-        { {50, 480, 120, 40}, "Setting", Color::BTN_NORMAL, Color::BLACK },
-        { {370, 480, 80, 40}, "Quit", Color::BTN_NORMAL, Color::BLACK },
+        { {centerX, startY, btnW, btnH}, "Beginner", Color::BTN_NORMAL, Color::BLACK },
+        { {centerX, startY + btnH + spacing,  btnW, btnH}, "Intermediate", Color::BTN_NORMAL, Color::BLACK },
+        { {centerX, startY + 2*(btnH + spacing), btnW, btnH}, "Expert", Color::BTN_NORMAL, Color::BLACK },
+        { {centerX - 100, startY + 3*(btnH + spacing) + 20, btnW, 48}, "High Scores", Color::BTN_NORMAL, Color::BLACK },
+        { {centerX + 100, startY + 3*(btnH + spacing) + 20, btnW, 48}, "Setting", Color::BTN_NORMAL, Color::BLACK },
+        { {centerX, startY + 4*(btnH + spacing) + 30, btnW, 48}, "Quit", Color::BTN_NORMAL, Color::BLACK },
     };
 }
 
@@ -94,6 +105,10 @@ void Game::buildGameButtons() {
     restartBtn = { {WINDOW_WIDTH - 180, 10, 80, 40}, "Restart", Color::BTN_GAME, Color::BLACK };
     menuBtn = { {WINDOW_WIDTH - 90,  10, 80, 40}, "Menu", Color::BTN_GAME, Color::BLACK };
     flagBtn = { {WINDOW_WIDTH - 270, 10, 80, 40}, "Flag", Color::BTN_NORMAL, Color::BLACK };
+}
+
+void Game::buildHighScoresButtons() {
+    backBtn = { { (WINDOW_WIDTH - 160)/2, 420, 160, 50 }, "Back", Color::BTN_NORMAL, Color::BLACK };
 }
 
 void Game::handleEvents() {
@@ -119,6 +134,9 @@ void Game::handleEvents() {
             case GameState::SETTING:
                 onSettingEvent(e);
                 break;
+            case GameState::HIGHSCORES:
+                onHighScoresEvent(e);
+                break;
             default: break;
         }
     }
@@ -135,6 +153,9 @@ void Game::onMenuEvent(const SDL_Event& e) {
 
         if (i < NUM_LEVELS) {
             startLevel(i);
+        }
+        else if (menuButtons[i].label == "High Scores") {
+            state = GameState::HIGHSCORES;
         } else if (menuButtons[i].label == "Setting") {
             state = GameState::SETTING;
         } else if (menuButtons[i].label == "Quit") {
@@ -178,6 +199,11 @@ void Game::onGameEvent(const SDL_Event& e) {
     }
     else {
         if (e.button.button == SDL_BUTTON_LEFT) {
+            if (board.firstClick && !timerRunning) {
+                gameStartTime = SDL_GetTicks();
+                timerRunning = true;
+                currentTime = 0;
+            }
             board.reveal(row, col);
         }
     }
@@ -186,6 +212,16 @@ void Game::onGameEvent(const SDL_Event& e) {
 void Game::onSettingEvent(const SDL_Event& e) {
     if (e.type == SDL_KEYDOWN)
         state = GameState::MENU;
+}
+
+void Game::onHighScoresEvent(const SDL_Event& e) {
+    if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
+        int mx = e.button.x, my = e.button.y;
+
+        if (pointInRect(mx, my, backBtn.rect)) {
+            state = GameState::MENU;
+        }
+    }
 }
 
 void Game::render() {
@@ -202,6 +238,9 @@ void Game::render() {
             break;
         case GameState::SETTING:
             renderSetting();
+            break;
+        case GameState::HIGHSCORES:
+            renderHighScores();
             break;
         default: break;
     }
@@ -237,6 +276,10 @@ void Game::renderGame() {
     std::string mineInfo = "Mines: " + std::to_string(board.remainingMines());
     SDL_Rect infoArea = { 10, 0, 180, HEADER_HEIGHT };
     drawTextCentered(mineInfo, Color::TITLE, infoArea);
+
+    std::string timeStr = "Time: " + std::to_string(currentTime);
+    SDL_Rect timeArea = { 220, 0, 120, HEADER_HEIGHT };
+    drawTextCentered(timeStr, Color::TITLE, timeArea);
 
     drawButton(restartBtn);
     drawButton(menuBtn);
@@ -307,6 +350,14 @@ void Game::renderGame() {
     }
 
     if (board.gameOver || board.win) {
+        if (board.win && timerRunning) {
+            int elapsed = currentTime;
+            if (elapsed < bestTimes[selectedLevel]) {
+                bestTimes[selectedLevel] = elapsed;
+                saveHighScores();
+            }
+            timerRunning = false;
+        }
         std::string msg = board.win ? "You Win!" : "Game Over!";
         SDL_Color msgColor = board.win ? Color::WIN_MSG : Color::LOSE_MSG;
         int msgY = boardY + board.rows * CELL_SIZE + 10;
@@ -318,6 +369,23 @@ void Game::renderGame() {
 void Game::renderSetting() {
     SDL_Rect area = { 0, WINDOW_HEIGHT / 2 - 20, WINDOW_WIDTH, 40 };
     drawTextCentered("No settings yet. Press any key to return.", Color::BLACK, area);
+}
+
+void Game::renderHighScores() {
+
+    SDL_Rect titleArea = { 0, 50, WINDOW_WIDTH, 70 };
+    drawTextCentered("HIGH SCORES", Color::TITLE, titleArea);
+
+    for (int i = 0; i < NUM_LEVELS; ++i) {
+        std::string timeStr = (bestTimes[i] >= 9999) ? "--" : std::to_string(bestTimes[i]) + " seconds";
+
+        SDL_Rect rect = { 80, 160 + i * 80, WINDOW_WIDTH - 160, 60 };
+
+        std::string displayText = LEVELS[i].name + ":   " + timeStr;
+        drawTextCentered(displayText, Color::BLACK, rect);
+    }
+
+    drawButton(backBtn);
 }
 
 void Game::startLevel(int levelIndex) {
@@ -373,4 +441,23 @@ bool Game::pointInRect(int px, int py, SDL_Rect r) {
 void Game::updateHover(std::vector<Button>& buttons, int mx, int my) {
     for (auto& btn : buttons)
         btn.hover = pointInRect(mx, my, btn.rect);
+}
+
+void Game::loadHighScores() {
+    std::ifstream file("highscores.txt");
+    if (!file.is_open()) return;
+
+    for (int i = 0; i < NUM_LEVELS; ++i) {
+        if (!(file >> bestTimes[i]))
+            bestTimes[i] = 9999;
+    }
+}
+
+void Game::saveHighScores() {
+    std::ofstream file("highscores.txt");
+    if (!file.is_open()) return;
+
+    for (int i = 0; i < NUM_LEVELS; ++i) {
+        file << bestTimes[i] << "\n";
+    }
 }

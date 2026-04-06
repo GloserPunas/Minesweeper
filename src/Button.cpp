@@ -62,8 +62,10 @@ void Button::setDisabled(bool disabled) {
 
 SDL_Color Button::currentBgColor() const {
     switch (state) {
-        case ButtonState::HOVERED:  return Color::BTN_HOVER;
-        case ButtonState::PRESSED:  return Color::BTN_BORDER;
+        case ButtonState::HOVERED:
+            return Color::BTN_HOVER;
+        case ButtonState::PRESSED:
+            return Color::BTN_BORDER;
         case ButtonState::DISABLED: {
             return SDL_Color{
                 static_cast<Uint8>(bgColor.r / 2),
@@ -76,14 +78,9 @@ SDL_Color Button::currentBgColor() const {
     }
 }
 
-// ============================================================
-// drawLabel() — private
-// ============================================================
-
 void Button::drawLabel(SDL_Renderer* renderer, TTF_Font* font) const {
     if (label.empty()) return;
 
-    // Màu text mờ hơn khi disabled
     SDL_Color col = isDisabled()
         ? SDL_Color{ textColor.r, textColor.g, textColor.b, 120 }
         : textColor;

@@ -16,9 +16,9 @@ public:
     Button() = default;
 
     Button(SDL_Rect rect,
-        std::string  label,
-        SDL_Color    bgColor   = Color::BTN_NORMAL,
-        SDL_Color    textColor = Color::BLACK);
+        std::string label,
+        SDL_Color bgColor = Color::BTN_NORMAL,
+        SDL_Color textColor = Color::BLACK);
 
     void draw(SDL_Renderer* renderer, TTF_Font* font) const;
 

@@ -24,13 +24,13 @@ public:
         return !revealed &&  flagged;
     }
     bool isEmpty() const {
-        return  revealed && !hasBomb && neighborBombs == 0;
+        return revealed && !hasBomb && neighborBombs == 0;
     }
     bool hasNumber() const {
-        return  revealed && !hasBomb && neighborBombs > 0;
+        return revealed && !hasBomb && neighborBombs > 0;
     }
     bool isBombCell() const {
-        return  revealed &&  hasBomb;
+        return revealed &&  hasBomb;
     }
 
     bool hasBomb = false;
